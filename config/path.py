@@ -1,0 +1,1 @@
+INIT_DATA_PATH = "data/taghche.csv"
