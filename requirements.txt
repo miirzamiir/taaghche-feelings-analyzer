@@ -3,6 +3,8 @@ numpy
 
 scikit-learn
 torch
+transformers
+datasets
 
 requests
 beautifulsoup4

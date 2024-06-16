@@ -4,8 +4,8 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 import pandas as pd
-import numpy as np
 from sklearn.model_selection import train_test_split
+
 
 """
 This class for crawl Taghche data for 
@@ -107,9 +107,20 @@ class DataSpliter:
         pass
     
     # create train, validation, and test dataset for torch learning
-    def dataset_train_val_test(self):
-        train_data, temp_data = train_test_split(self._, test_size=0.2,  shuffle=False, stratify=balanced_data['sentiment'])
-
+    def create_train_val_test(self,
+        selected_column = ["id", "comment", "sentiment"],
+        val_size=0.1, test_size=0.1
+        ) -> None:
+        TRAIN_DATA_PATH = "data/train.csv"
+        VAL_DATA_PATH = "data/val.csv"
+        TEST_DATA_PATH = "data/test.csv"
+        df = self._data[selected_column]
+        df_train, df_temp = train_test_split(df, test_size=val_size+test_size, random_state=42)
+        df_val, df_test = train_test_split(df_temp, test_size=test_size/(val_size+test_size), random_state=42)
+        df_train.to_csv("../"+TRAIN_DATA_PATH, index=False)
+        df_val.to_csv("../"+VAL_DATA_PATH, index=False)
+        df_test.to_csv("../"+TEST_DATA_PATH, index=False)
+    
     
         
         
