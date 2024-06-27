@@ -1,0 +1,1 @@
+1- clean data before tuning with remove nonstop data

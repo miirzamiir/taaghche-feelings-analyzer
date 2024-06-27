@@ -92,7 +92,7 @@ class DataProcessor:
         # Combine sampled classes
         self._balance_df =  pd.concat([positive, neutral, negative]).\
             sample(frac=1, random_state=42, replace=True).reset_index(drop=True)
-
+    
 
     
       
@@ -115,6 +115,7 @@ class DataSpliter:
         VAL_DATA_PATH = "data/val.csv"
         TEST_DATA_PATH = "data/test.csv"
         df = self._data[selected_column]
+        df = df.rename(columns = {"comment": "text", "sentiment": "label"})
         df_train, df_temp = train_test_split(df, test_size=val_size+test_size, random_state=42)
         df_val, df_test = train_test_split(df_temp, test_size=test_size/(val_size+test_size), random_state=42)
         df_train.to_csv("../"+TRAIN_DATA_PATH, index=False)
