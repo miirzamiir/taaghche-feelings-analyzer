@@ -5,6 +5,7 @@ scikit-learn
 torch
 transformers
 datasets
+imblearn
 
 requests
 beautifulsoup4
