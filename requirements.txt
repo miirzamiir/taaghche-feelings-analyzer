@@ -1,5 +1,6 @@
 pandas
 numpy
+cupy-cuda12x
 
 scikit-learn
 torch
@@ -12,3 +13,6 @@ beautifulsoup4
 
 tqdm
 typing
+
+cleantext
+farsi-tools

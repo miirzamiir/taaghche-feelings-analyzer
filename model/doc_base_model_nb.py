@@ -1,5 +1,9 @@
+import re
+import cupy as cp
 from hazm import *
 import pandas as pd
+from cleantext import clean
+from farsi_tools import stop_words
 from sklearn.model_selection import train_test_split
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -14,11 +18,55 @@ class DocBaseNiveBayes:
         self.normalizer = Normalizer()
         self.stop_words = set(stopwords_list())
         self.tokenizer = WordTokenizer()
+        with open('resources/stopwords.txt',encoding="utf-8") as f:
+            stop=f.readlines()
+        stop_word=[word.replace('\n','') for word in stop]
+        stop_word=[re.sub('[\\u200c]',' ',word)  for word in stop_word]
+        stop_word.extend(stop_words())
+
+    def clean_text(self,text):
+        text = clean(text,
+                     fix_unicode=True,
+                     to_ascii=False,
+                     no_numbers=True,
+                     no_emoji=True,
+                     no_digits=True,
+                     no_punct=True,
+                     no_emails=True,
+                     replace_with_phone_number='',
+                     replace_with_number='',
+                     replace_with_digit='',
+                     replace_with_email='',
+                     replace_with_currency_symbol='',
+                     replace_with_punct='')
+        text = re.sub(r'[\u200c]', '', text)
+        text=re.sub(r'[A-Za-z0-9]','',text)
+        text=re.sub(r'[^\w\s]', '', text)
+        text=re.sub(r'[۔،؛؟٪٬…_]', '', text)
+        text=re.sub(r'[\n]','',text)
+        text=re.sub(' +',' ',text)
+        text = word_tokenize(text)
+        text=[word for word in text if word not in self.stop_word]
+        text=' '.join(text)
+
+        return text
+
+    def final_clean(self, data):
+        data = data.drop_duplicates()
+        clean_dataset = data.dropna(subset=['rate'])
+        clean_dataset['clean'] = clean_dataset['comment'].apply(self.clean_text)
+        dd=[3.0, 4.0, 5.0]
+        filtered_df = clean_dataset[clean_dataset['rate'].isin(dd)]
+        for i in dd:
+            filtered_f=filtered_df[filtered_df['rate']==i]
+            rem=filtered_f.iloc[:100]
+            filtered_df=pd.concat([filtered_df[filtered_df['rate']!=i],rem])
+        return filtered_df
 
     def preprocess(self, text):
         text = self.normalizer.normalize(text)
+        text = self.final_clean(text)
         tokens = word_tokenize(text)
-        tokens = [word for word in tokens if word not in self.stop_words and word.isalpha()]
         return ' '.join(tokens)
 
     def tfidf_vectorizer(self, data):
@@ -44,8 +92,21 @@ class DocBaseNiveBayes:
     def svm_classifier(self, x_train, y_train, x_test, y_test):
         # svm_model = SVC(kernel='linear')
         # svm_model.fit(x_train, y_train)
-        svm_model = SVC(kernel='poly', degree=3, C=1).fit(x_train, y_train)
-        y_pred_svm = svm_model.predict(x_test)
+        x_train_gpu = cp.asarray(x_train)
+        y_train_gpu = cp.asarray(y_train)
+        x_test_gpu = cp.asarray(x_test)
+
+        # Initialize and train the model on GPU
+        svm_model = SVC(kernel='poly', degree=3, C=1)
+        svm_model.fit(x_train_gpu, y_train_gpu)
+
+        # Make predictions on the GPU
+        y_pred_svm_gpu = svm_model.predict(x_test_gpu)
+
+        # Convert predictions back to NumPy arrays for compatibility with scikit-learn metrics
+        y_pred_svm = cp.asnumpy(y_pred_svm_gpu)
+
+        # Print results
         print("Support Vector Machine Classifier")
         print("Accuracy:", accuracy_score(y_test, y_pred_svm))
         print(classification_report(y_test, y_pred_svm))
