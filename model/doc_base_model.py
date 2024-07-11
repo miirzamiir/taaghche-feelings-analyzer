@@ -12,7 +12,7 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import classification_report, accuracy_score, f1_score, precision_score, recall_score, confusion_matrix
 import joblib
 
-class DocBaseNiveBayes:
+class DocBaseModel:
     def __init__(self) -> None:
         self.normalizer = Normalizer()
         self.tokenizer = WordTokenizer()
@@ -135,5 +135,5 @@ class DocBaseNiveBayes:
         
         self.naive_bayes_classifier(x_train, y_train, x_test, y_test, batch_size, n_epochs)
         
-dbnb = DocBaseNiveBayes()
-dbnb.doc_base_model()
+dbm = DocBaseModel()
+dbm.doc_base_model()
